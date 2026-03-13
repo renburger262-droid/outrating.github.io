@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Калькулятор академического рейтинга</title>
+  <style>
+    :root {
+      --bg-main: #0b1220;
+      --bg-panel: rgba(15, 23, 42, 0.88);
+      --bg-soft: rgba(30, 41, 59, 0.75);
+      --border: rgba(148, 163, 184, 0.18);
+      --text-main: #e2e8f0;
+      --text-soft: #94a3b8;
+      --accent: #38bdf8;
+      --accent-strong: #0ea5e9;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #f87171;
+      --shadow: 0 24px 80px rgba(2, 6, 23, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at top left, rgba(14, 165, 233, 0.28), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.22), transparent 28%),
+        linear-gradient(135deg, #020617 0%, #0f172a 45%, #111827 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(1080px, 100%);
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 24px;
+      background: rgba(2, 6, 23, 0.34);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 28px;
+      padding: 24px;
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 28px;
+    }
+
+    .hero {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.24);
+      color: #bae6fd;
+      font-size: 0.92rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 1.02rem;
+      line-height: 1.65;
+      max-width: 56ch;
+    }
+
+    .formula-box {
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .formula-card {
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: var(--bg-soft);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    .formula-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      color: #f8fafc;
+    }
+
+    .formula-card code {
+      display: block;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: #cbd5e1;
+      white-space: normal;
+    }
+
+    form {
+      display: grid;
+      gap: 18px;
+    }
+
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.95rem;
+      color: #dbeafe;
+    }
+
+    .hint {
+      font-size: 0.82rem;
+      color: var(--text-soft);
+    }
+
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text-main);
+      padding: 15px 16px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    input[type="number"]:focus {
+      border-color: rgba(56, 189, 248, 0.8);
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #082f49;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 14px 22px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+      box-shadow: 0 14px 30px rgba(14, 165, 233, 0.28);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+
+    .auto-note {
+      color: var(--text-soft);
+      font-size: 0.9rem;
+    }
+
+    .results {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .result-card {
+      padding: 22px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.82));
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, rgba(56, 189, 248, 0.13), transparent 44%);
+      pointer-events: none;
+    }
+
+    .result-label {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 10px;
+      color: var(--text-soft);
+      font-size: 0.94rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .result-value {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-size: clamp(2.1rem, 5vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      color: #f8fafc;
+    }
+
+    .result-meta {
+      position: relative;
+      z-index: 1;
+      margin-top: 10px;
+      font-size: 0.92rem;
+      color: #cbd5e1;
+      line-height: 1.55;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.94rem;
+    }
+
+    .status.ok {
+      color: #dcfce7;
+      background: rgba(34, 197, 94, 0.14);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .status.warn {
+      color: #fef3c7;
+      background: rgba(245, 158, 11, 0.16);
+      border: 1px solid rgba(245, 158, 11, 0.34);
+    }
+
+    .details {
+      display: grid;
+      gap: 12px;
+      padding: 18px 20px;
+      border-radius: 20px;
+      background: rgba(15, 23, 42, 0.68);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    .details-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: #dbeafe;
+      font-size: 0.96rem;
+    }
+
+    .details-row span:last-child {
+      color: var(--text-soft);
+      text-align: right;
+    }
+
+    .error {
+      min-height: 24px;
+      color: var(--danger);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 920px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 14px;
+      }
+
+      .app,
+      .panel {
+        padding: 18px;
+        border-radius: 22px;
+      }
+
+      .fields {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="panel hero">
+      <span class="badge">Академический калькулятор</span>
+      <div>
+        <h1>Рейтинг допуска и итоговая оценка за семестр</h1>
+        <p class="subtitle">
+          Введите баллы от 0 до 100. Перерасчет выполняется автоматически при изменении значений,
+          а при желании можно нажать кнопку расчета вручную.
+        </p>
+      </div>
+
+      <div class="formula-box">
+        <article class="formula-card">
+          <strong>Если указаны РК1 и РК2</strong>
+          <code>Рейтинг = (Средний текущий × 0.6) + (((РК1 + РК2) / 2) × 0.4)</code>
+        </article>
+        <article class="formula-card">
+          <strong>Если РК2 пустой или равен 0</strong>
+          <code>Рейтинг = (Средний текущий × 0.6) + ((РК1 / 2) × 0.4)</code>
+        </article>
+        <article class="formula-card">
+          <strong>Итоговая оценка</strong>
+          <code>Итоговая = (Рейтинг × 0.6) + (Экзамен × 0.4)</code>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <form id="rating-form" novalidate>
+        <div class="fields">
+          <div class="field">
+            <label for="average">Средний текущий балл</label>
+            <input id="average" name="average" type="number" min="0" max="100" step="0.01" placeholder="Например, 78.5" required>
+            <div class="hint">Учитывается с весом 60% в рейтинге.</div>
+          </div>
+
+          <div class="field">
+            <label for="rk1">Рубежный контроль 1</label>
+            <input id="rk1" name="rk1" type="number" min="0" max="100" step="0.01" placeholder="Например, 82" required>
+            <div class="hint">Обязательный для расчета допуска.</div>
+          </div>
+
+          <div class="field">
+            <label for="rk2">Рубежный контроль 2</label>
+            <input id="rk2" name="rk2" type="number" min="0" max="100" step="0.01" placeholder="Оставьте пустым, если нет">
+            <div class="hint">Если пусто или 0, используется формула без второго контроля.</div>
+          </div>
+
+          <div class="field">
+            <label for="exam">Экзамен</label>
+            <input id="exam" name="exam" type="number" min="0" max="100" step="0.01" placeholder="Например, 90" required>
+            <div class="hint">Учитывается с весом 40% в итоговой оценке.</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="submit">Рассчитать</button>
+          <span class="auto-note">Автопересчет включен</span>
+        </div>
+
+        <div id="error" class="error" aria-live="polite"></div>
+      </form>
+
+      <section class="results" aria-live="polite">
+        <article class="result-card">
+          <p class="result-label">Рейтинг допуска</p>
+          <p id="rating-value" class="result-value">0.00</p>
+          <div id="status" class="status ok">Введите данные для расчета</div>
+          <p id="rating-meta" class="result-meta">
+            После ввода баллов здесь появится формула, которая использовалась в расчете рейтинга.
+          </p>
+        </article>
+
+        <article class="result-card">
+          <p class="result-label">Итоговая оценка</p>
+          <p id="final-value" class="result-value">0.00</p>
+          <p id="final-meta" class="result-meta">
+            Итоговая оценка зависит от рейтинга допуска и результата экзамена.
+          </p>
+        </article>
+
+        <div class="details">
+          <div class="details-row">
+            <span>Использованная схема</span>
+            <span id="scheme-text">Ожидается ввод данных</span>
+          </div>
+          <div class="details-row">
+            <span>Условие допуска</span>
+            <span>Рейтинг не ниже 50</span>
+          </div>
+          <div class="details-row">
+            <span>Округление</span>
+            <span>До 2 знаков после запятой</span>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById("rating-form");
+    const errorBox = document.getElementById("error");
+    const ratingValue = document.getElementById("rating-value");
+    const finalValue = document.getElementById("final-value");
+    const status = document.getElementById("status");
+    const schemeText = document.getElementById("scheme-text");
+    const ratingMeta = document.getElementById("rating-meta");
+    const finalMeta = document.getElementById("final-meta");
+    const inputs = Array.from(form.querySelectorAll("input[type='number']"));
+
+    function parseOptionalNumber(value) {
+      if (value.trim() === "") {
+        return null;
+      }
+
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : NaN;
+    }
+
+    function parseRequiredNumber(value) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : NaN;
+    }
+
+    function validateRange(label, value, required) {
+      if (!required && value === null) {
+        return null;
+      }
+
+      if (!Number.isFinite(value)) {
+        return "Заполните поле \"" + label + "\" числом от 0 до 100.";
+      }
+
+      if (value < 0 || value > 100) {
+        return "Поле \"" + label + "\" должно быть в диапазоне от 0 до 100.";
+      }
+
+      return null;
+    }
+
+    function formatNumber(value) {
+      return value.toFixed(2);
+    }
+
+    function setStatus(isAdmitted) {
+      if (isAdmitted) {
+        status.className = "status ok";
+        status.textContent = "Допущен";
+      } else {
+        status.className = "status warn";
+        status.textContent = "Не допущен";
+      }
+    }
+
+    function resetResults(message) {
+      ratingValue.textContent = "0.00";
+      finalValue.textContent = "0.00";
+      status.className = "status ok";
+      status.textContent = "Введите данные для расчета";
+      schemeText.textContent = "Ожидается ввод данных";
+      ratingMeta.textContent = message || "После ввода баллов здесь появится формула, которая использовалась в расчете рейтинга.";
+      finalMeta.textContent = "Итоговая оценка зависит от рейтинга допуска и результата экзамена.";
+    }
+
+    function calculate() {
+      const average = parseRequiredNumber(form.average.value);
+      const rk1 = parseRequiredNumber(form.rk1.value);
+      const rk2 = parseOptionalNumber(form.rk2.value);
+      const exam = parseRequiredNumber(form.exam.value);
+
+      const errors = [
+        validateRange("Средний текущий балл", average, true),
+        validateRange("Рубежный контроль 1", rk1, true),
+        validateRange("Рубежный контроль 2", rk2, false),
+        validateRange("Экзамен", exam, true)
+      ].filter(Boolean);
+
+      const hasAnyInput = inputs.some((input) => input.value.trim() !== "");
+
+      if (errors.length > 0) {
+        errorBox.textContent = errors[0];
+        if (hasAnyInput) {
+          resetResults("Исправьте значения в форме, чтобы получить корректный расчет.");
+        } else {
+          resetResults();
+        }
+        return;
+      }
+
+      if (!hasAnyInput) {
+        errorBox.textContent = "";
+        resetResults();
+        return;
+      }
+
+      const useSecondControl = rk2 !== null && rk2 !== 0;
+      const checkpointPart = useSecondControl ? ((rk1 + rk2) / 2) * 0.4 : (rk1 / 2) * 0.4;
+      const rating = (average * 0.6) + checkpointPart;
+      const finalScore = (rating * 0.6) + (exam * 0.4);
+
+      errorBox.textContent = "";
+      ratingValue.textContent = formatNumber(rating);
+      finalValue.textContent = formatNumber(finalScore);
+      setStatus(rating >= 50);
+
+      schemeText.textContent = useSecondControl ? "Стандартный рейтинг с РК1 и РК2" : "Упрощенный рейтинг без второго контроля";
+      ratingMeta.textContent = useSecondControl
+        ? "Формула: (" + formatNumber(average) + " × 0.6) + (((" + formatNumber(rk1) + " + " + formatNumber(rk2) + ") / 2) × 0.4)"
+        : "Формула: (" + formatNumber(average) + " × 0.6) + ((" + formatNumber(rk1) + " / 2) × 0.4)";
+      finalMeta.textContent = "Формула: (" + formatNumber(rating) + " × 0.6) + (" + formatNumber(exam) + " × 0.4)";
+    }
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      calculate();
+    });
+
+    inputs.forEach(function (input) {
+      input.addEventListener("input", calculate);
+    });
+
+    resetResults();
+  </script>
+</body>
+</html>
